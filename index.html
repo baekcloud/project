@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> 백현 3대 500 프로젝트 </title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Pretendard', sans-serif; background-color: #f4f6f8; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        #app { width: 100%; max-width: 600px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .header-area { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; }
+        h1 { margin: 0; color: #2c3e50; font-size: 1.5rem; }
+        .btn { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-primary { background-color: #3b82f6; color: white; }
+        .btn-success { background-color: #10b981; color: white; margin-top: 20px; width: 100%; font-size: 1.1rem; }
+        .btn-secondary { background-color: #e2e8f0; color: #333; }
+        .btn-danger { background-color: #ef4444; color: white; padding: 6px 10px; border-radius: 4px; }
+        .btn:hover { opacity: 0.8; }
+        
+        .card-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; margin-top: 20px; }
+        .card { background: #fff; border: 2px solid #e2e8f0; border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; position: relative; }
+        .card:hover { border-color: #3b82f6; }
+        .week-badge { position: absolute; top: 10px; left: 10px; background: #3b82f6; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+        .exercise-name { font-size: 1.1rem; font-weight: bold; color: #64748b; margin-top: 10px; }
+        .rm-value { font-size: 1.8rem; color: #1e293b; font-weight: 800; margin: 10px 0; }
+
+        .options-container { background: #eff6ff; padding: 15px; border-radius: 8px; margin: 15px 0; display: flex; gap: 10px; flex-wrap: wrap;}
+        .options-container .input-group { margin-bottom: 0; flex: 1; min-width: 120px; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.85rem; }
+        .input-group select, .reps-input, .custom-input { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; font-family: inherit; text-align: center; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.95rem; }
+        th, td { border-bottom: 1px solid #eee; padding: 10px; text-align: center; }
+        th { background-color: #f8fafc; color: #475569; }
+        .highlight { background-color: #fef08a; font-weight: bold; }
+        .joker { color: #ef4444; font-weight: bold; }
+        .supp { color: #3b82f6; }
+        .reps-input { width: 60px; font-weight: bold; color: #3b82f6; border-color: #3b82f6; }
+        
+        /* 추가 운동 영역 스타일 */
+        .custom-section { margin-top: 30px; border-top: 2px dashed #cbd5e1; padding-top: 20px; }
+        .custom-input { text-align: left; }
+        .custom-memo { font-size: 0.75rem; color: #10b981; font-weight: bold; margin-top: 4px; text-align: left; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div class="header-area">
+        <h1>🏋️  백현 3대 500 프로젝트 </h1>
+        <div id="nav-buttons"></div>
+    </div>
+    <div id="content"></div>
+</div>
+
+<script>
+    const weekConfig = {
+        1: { pct: [0.65, 0.75, 0.85], reps: [5, 5, "5+"], label: "1주차 (전3주-1)" },
+        2: { pct: [0.70, 0.80, 0.90], reps: [3, 3, "3+"], label: "2주차 (전3주-2)" },
+        3: { pct: [0.75, 0.85, 0.95], reps: [5, 3, "1+"], label: "3주차 (전3주-3/PR)" },
+        4: { pct: [0.65, 0.75, 0.85], reps: [5, 5, "5+"], label: "4주차 (후3주-1)" },
+        5: { pct: [0.70, 0.80, 0.90], reps: [3, 3, "3+"], label: "5주차 (후3주-2)" },
+        6: { pct: [0.75, 0.85, 0.95], reps: [5, 3, "1+"], label: "6주차 (후3주-3/PR)" },
+        7: { pct: [0.40, 0.50, 0.60], reps: [5, 5, 5], label: "7주차 (디로딩)" }
+    };
+
+    // 종목별 보조 운동 프리셋 목록
+    const customExerciseOptions = {
+        deadlift: ["풀업", "친업", "바벨 로우", "덤벨 로우", "랫 풀 다운", "시티드 로우", "바벨 컬", "덤벨 컬", "해머 컬"],
+        squat: ["레그 프레스", "레그 익스텐션", "레그 컬", "런지", "불가리안 스플릿 스쿼트", "카프 레이즈", "힙 쓰러스트"],
+        bench: ["덤벨 프레스", "인클라인 덤벨 프레스", "딥스", "펙 덱 플라이", "푸쉬업", "케이블 푸쉬다운", "라잉 트라이셉스 익스텐션", "오버헤드 익스텐션"]
+    };
+
+    const defaultData = {
+        squat: { name: "스쿼트", week: 1, history: [{ date: "2026-04-20", rm: 120 }], lastCustom: {} },
+        bench: { name: "벤치프레스", week: 1, history: [{ date: "2026-04-20", rm: 80 }], lastCustom: {} },
+        deadlift: { name: "데드리프트", week: 1, history: [{ date: "2026-04-20", rm: 140 }], lastCustom: {} }
+    };
+
+    let workoutData = JSON.parse(localStorage.getItem('yachuData_v9')) || defaultData;
+    function saveToLocal() { localStorage.setItem('yachuData_v9', JSON.stringify(workoutData)); }
+
+    const contentDiv = document.getElementById('content');
+    const navButtons = document.getElementById('nav-buttons');
+
+    function calculateEpleyRM(weight, reps) {
+        if (reps <= 0) return 0;
+        return reps === 1 ? weight : Math.round(weight * (1 + (reps / 30)));
+    }
+
+    function generateYachuRoutine(exerciseKey, currentRM, week, jokerOpt, suppOpt) {
+        const tm = currentRM * 0.9;
+        const roundTo2_5 = (weight) => Math.round(weight / 2.5) * 2.5;
+        const config = weekConfig[week];
+
+        let routine = [
+            { type: "워밍업", weight: roundTo2_5(tm * 0.40), targetReps: 5, class: "" },
+            { type: "워밍업", weight: roundTo2_5(tm * 0.50), targetReps: 5, class: "" },
+            { type: "워밍업", weight: roundTo2_5(tm * 0.60), targetReps: 3, class: "" },
+            { type: "본세트 1", weight: roundTo2_5(tm * config.pct[0]), targetReps: config.reps[0], class: "" },
+            { type: "본세트 2", weight: roundTo2_5(tm * config.pct[1]), targetReps: config.reps[1], class: "" },
+            { type: `본세트 3(PR)`, weight: roundTo2_5(tm * config.pct[2]), targetReps: config.reps[2], class: "highlight", isPR: true }
+        ];
+
+        if (jokerOpt !== "none" && week !== 7) {
+            const jokerPct = jokerOpt === "joker1" ? [0.05] : [0.05, 0.10];
+            jokerPct.forEach((p, i) => {
+                routine.push({ type: `조커 ${i+1}`, weight: roundTo2_5(tm * (config.pct[2] + p)), targetReps: 1, class: "joker", isPR: true });
+            });
+        }
+
+        if (suppOpt !== "none") {
+            let suppSets = 5;
+            let suppReps = (exerciseKey === "bench") ? 8 : 4; 
+            let pcts = { fsl: config.pct[0], ssl: config.pct[1], bbb: 0.50, dad: 0.70 };
+            let suppWeight = tm * pcts[suppOpt];
+            for(let i=1; i<=suppSets; i++) {
+                routine.push({ type: `${suppOpt.toUpperCase()} ${i}`, weight: roundTo2_5(suppWeight), targetReps: suppReps, class: "supp" });
+            }
+        }
+        return routine;
+    }
+
+    function renderHome() {
+        navButtons.innerHTML = `<button class="btn btn-secondary" onclick="renderEditForm()">⚙️ 1RM 설정</button> <button class="btn btn-primary" onclick="renderChart()">📈 추세</button>`;
+        let html = '<div class="card-container">';
+        for (const key in workoutData) {
+            const ex = workoutData[key];
+            const currentRM = ex.history[ex.history.length - 1].rm;
+            html += `
+                <div class="card" onclick="renderRoutine('${key}')">
+                    <div class="week-badge">${ex.week}주차</div>
+                    <div class="exercise-name">${ex.name}</div>
+                    <div class="rm-value">${currentRM}kg</div>
+                    <div style="font-size:0.75rem; color:#94a3b8;">루틴 보러가기 ></div>
+                </div>
+            `;
+        }
+        html += '</div>';
+        contentDiv.innerHTML = html;
+    }
+
+    function renderRoutine(key) {
+        navButtons.innerHTML = `<button class="btn btn-secondary" onclick="renderHome()">🔙 홈으로</button>`;
+        const data = workoutData[key];
+        const currentRM = data.history[data.history.length - 1].rm;
+        const currentWeek = data.week || 1;
+
+        // 드롭다운을 위한 datalist 생성
+        let datalistHtml = `<datalist id="custom-list-${key}">`;
+        if (customExerciseOptions[key]) {
+            customExerciseOptions[key].forEach(ex => { datalistHtml += `<option value="${ex}">`; });
+        }
+        datalistHtml += `</datalist>`;
+
+        let html = `
+            ${datalistHtml}
+            <h2 style="text-align:center; margin-bottom: 5px;">${data.name} 운동 기록</h2>
+            
+            <div class="options-container">
+                <div class="input-group">
+                    <label>📅 주차 선택</label>
+                    <select id="weekSelect" onchange="updateRoutineTable('${key}', ${currentRM})">
+                        ${Object.keys(weekConfig).map(w => `<option value="${w}" ${w == currentWeek ? 'selected' : ''}>${weekConfig[w].label}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="input-group"><label>🃏 조커</label><select id="jokerSelect" onchange="updateRoutineTable('${key}', ${currentRM})"><option value="none">안 함</option><option value="joker1">1세트</option><option value="joker2">2세트</option></select></div>
+                <div class="input-group"><label>🛠️ 보조</label><select id="suppSelect" onchange="updateRoutineTable('${key}', ${currentRM})"><option value="none">안 함</option><option value="fsl">FSL</option><option value="ssl">SSL</option><option value="bbb">BBB</option><option value="dad">DAD</option></select></div>
+            </div>
+            
+            <div id="routineTableContainer"></div>
+
+            <div class="custom-section">
+                <h3 style="margin-top:0;">➕ 추가 운동 (선택)</h3>
+                <p style="font-size:0.8rem; color:#666; margin-top:-10px;">빈칸을 터치하면 추천 목록이 나옵니다.</p>
+                <table style="margin-top:0;">
+                    <thead>
+                        <tr><th>운동명</th><th>kg</th><th>회</th><th></th></tr>
+                    </thead>
+                    <tbody id="customTableBody">
+                    </tbody>
+                </table>
+                <button class="btn btn-secondary" style="width:100%; margin-top:10px; padding:6px;" onclick="addCustomRow('${key}')">+ 세트 추가하기</button>
+            </div>
+
+            <button class="btn btn-success" onclick="saveWorkoutResult('${key}')">오늘 운동 완료 (저장)</button>
+        `;
+        contentDiv.innerHTML = html;
+        updateRoutineTable(key, currentRM);
+    }
+
+    function updateRoutineTable(key, currentRM) {
+        const week = parseInt(document.getElementById('weekSelect').value);
+        const jokerOpt = document.getElementById('jokerSelect').value;
+        const suppOpt = document.getElementById('suppSelect').value;
+        const routine = generateYachuRoutine(key, currentRM, week, jokerOpt, suppOpt);
+        
+        let tableHtml = `<table><tr><th>세트</th><th>무게</th><th>목표</th><th>실제</th></tr>`;
+        routine.forEach(r => {
+            tableHtml += `<tr class="${r.class}"><td>${r.type}</td><td>${r.weight}kg</td><td>${r.targetReps}</td><td><input type="number" class="reps-input" data-weight="${r.weight}" value="${parseInt(r.targetReps) || 5}"></td></tr>`;
+        });
+        tableHtml += `</table>`;
+        document.getElementById('routineTableContainer').innerHTML = tableHtml;
+    }
+
+    function addCustomRow(key) {
+        const tbody = document.getElementById('customTableBody');
+        const tr = document.createElement('tr');
+        
+        // list 속성을 통해 생성해둔 datalist 와 연결합니다.
+        tr.innerHTML = `
+            <td style="width: 50%;">
+                <input type="text" list="custom-list-${key}" class="custom-input custom-name" placeholder="선택/입력" oninput="showCustomMemo(this, '${key}')" onclick="this.value=''; this.dispatchEvent(new Event('input'))">
+                <div class="custom-memo"></div>
+            </td>
+            <td><input type="number" class="custom-input custom-weight" placeholder="무게"></td>
+            <td><input type="number" class="custom-input custom-reps" placeholder="횟수"></td>
+            <td><button class="btn-danger" onclick="this.parentElement.parentElement.remove()">X</button></td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    function showCustomMemo(inputElem, key) {
+        const name = inputElem.value.trim();
+        const memoDiv = inputElem.nextElementSibling;
+        if (!workoutData[key].lastCustom) workoutData[key].lastCustom = {};
+        const history = workoutData[key].lastCustom;
+
+        if (name && history[name]) {
+            memoDiv.innerText = `💡 이전: ${history[name].join(', ')}`;
+        } else {
+            memoDiv.innerText = '';
+        }
+    }
+
+    function saveWorkoutResult(key) {
+        const selectedWeek = parseInt(document.getElementById('weekSelect').value);
+        const today = new Date().toISOString().split('T')[0];
+
+        const inputs = document.querySelectorAll('.reps-input');
+        let maxEstimatedRM = 0;
+        inputs.forEach(input => {
+            const weight = parseFloat(input.getAttribute('data-weight'));
+            const actualReps = parseInt(input.value);
+            const estimatedRM = calculateEpleyRM(weight, actualReps);
+            if (estimatedRM > maxEstimatedRM) maxEstimatedRM = estimatedRM;
+        });
+
+        const history = workoutData[key].history;
+        let currentRM = history[history.length - 1].rm;
+        let targetRM = currentRM;
+        let alertMsg = "";
+
+        if (maxEstimatedRM > currentRM) {
+            targetRM = maxEstimatedRM;
+            alertMsg += `🎉 당일 횟수 폭발로 새로운 PR 달성! (추정 1RM: ${maxEstimatedRM}kg)\n`;
+        }
+
+        if (selectedWeek === 3 || selectedWeek === 7) {
+            const tmIncrement = (key === 'bench') ? 2.5 : 5;
+            const currentTM = currentRM * 0.9;
+            const newTM = currentTM + tmIncrement;
+            const wendlerRM = Math.round(newTM / 0.9);
+            if (wendlerRM > targetRM) {
+                targetRM = wendlerRM;
+                alertMsg += `📈 야추 규칙에 따라 강제 증량되었습니다. (TM +${tmIncrement}kg)\n`;
+            }
+        }
+
+        const lastRecord = history[history.length - 1];
+        if (targetRM > currentRM) {
+            if(alertMsg === "") alertMsg = "성장 중입니다!";
+            alert(alertMsg + `\n결과: 기존 ${currentRM}kg -> ${targetRM}kg 업데이트!`);
+            if (lastRecord.date === today) lastRecord.rm = targetRM;
+            else history.push({ date: today, rm: targetRM });
+        } else {
+            if (lastRecord.date !== today) history.push({ date: today, rm: currentRM });
+            alert("오늘 운동 완료! 수고하셨습니다. 다음 주차로 넘어갑니다.");
+        }
+
+        workoutData[key].week = (selectedWeek % 7) + 1;
+
+        const customRows = document.querySelectorAll('#customTableBody tr');
+        if (customRows.length > 0) {
+            if (!workoutData[key].lastCustom) workoutData[key].lastCustom = {};
+            let sessionCustom = {}; 
+
+            customRows.forEach(tr => {
+                const name = tr.querySelector('.custom-name').value.trim();
+                const weight = tr.querySelector('.custom-weight').value;
+                const reps = tr.querySelector('.custom-reps').value;
+
+                if (name) {
+                    if (!sessionCustom[name]) sessionCustom[name] = [];
+                    let recordStr = "";
+                    if (weight && reps) recordStr = `${weight}kg ${reps}회`;
+                    else if (!weight && reps) recordStr = `맨몸 ${reps}회`;
+                    else if (weight && !reps) recordStr = `${weight}kg`;
+                    
+                    if(recordStr) sessionCustom[name].push(recordStr);
+                }
+            });
+
+            for (let cName in sessionCustom) {
+                workoutData[key].lastCustom[cName] = sessionCustom[cName];
+            }
+        }
+
+        saveToLocal();
+        renderHome();
+    }
+
+    function renderEditForm() {
+        navButtons.innerHTML = `<button class="btn btn-secondary" onclick="renderHome()">🔙 돌아가기</button>`;
+        let html = `<div class="edit-form"><h3>🛠️ 현재 1RM 수정</h3>`;
+        for (const key in workoutData) {
+            const currentRM = workoutData[key].history[workoutData[key].history.length - 1].rm;
+            html += `<div class="input-group"><label>${workoutData[key].name} (kg)</label><input type="number" id="input-${key}" value="${currentRM}"></div>`;
+        }
+        html += `<button class="btn btn-primary" style="width:100%; margin-top:10px;" onclick="updateRM()">저장</button></div>`;
+        contentDiv.innerHTML = html;
+    }
+    function updateRM() {
+        const today = new Date().toISOString().split('T')[0];
+        for (const key in workoutData) {
+            const newVal = parseInt(document.getElementById(`input-${key}`).value);
+            if (!isNaN(newVal)) {
+                const history = workoutData[key].history;
+                const lastRecord = history[history.length - 1];
+                if (lastRecord.date === today) lastRecord.rm = newVal;
+                else history.push({ date: today, rm: newVal });
+            }
+        }
+        saveToLocal(); renderHome();
+    }
+    function renderChart() {
+        navButtons.innerHTML = `<button class="btn btn-secondary" onclick="renderHome()">🔙 홈으로</button>`;
+        contentDiv.innerHTML = `<canvas id="progressChart" style="margin-top:20px;"></canvas>`;
+        const ctx = document.getElementById('progressChart').getContext('2d');
+        const colors = { squat: '#ef4444', bench: '#3b82f6', deadlift: '#10b981' };
+        new Chart(ctx, {
+            type: 'line',
+            data: { datasets: Object.keys(workoutData).map(key => ({ label: workoutData[key].name, data: workoutData[key].history.map(h => ({ x: h.date, y: h.rm })), borderColor: colors[key], tension: 0.3 })) },
+            options: { responsive: true, scales: { x: { type: 'category' } } }
+        });
+    }
+
+    renderHome();
+</script>
+</body>
+</html>
