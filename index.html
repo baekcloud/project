@@ -4,12 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title> 백's 3대 500 프로젝트 </title>
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="icon" href="icon.png">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: 'Pretendard', sans-serif; background-color: #f4f6f8; margin: 0; padding: 20px; display: flex; justify-content: center; }
         #app { width: 100%; max-width: 600px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); box-sizing: border-box; }
+        
+        /* 헤더 및 버튼 영역 디자인 개선 */
         .header-area { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; }
         h1 { margin: 0; color: #2c3e50; font-size: 1.5rem; }
+        
+        /* 버튼 컨테이너를 우측 끝으로 밀어붙이고 간격을 일정하게 만듭니다 */
+        #nav-buttons { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+        
         .btn { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; white-space: nowrap; }
         .btn-primary { background-color: #3b82f6; color: white; }
         .btn-success { background-color: #10b981; color: white; margin-top: 20px; width: 100%; font-size: 1.1rem; }
@@ -28,7 +36,6 @@
         .options-container .input-group { margin-bottom: 0; flex: 1; min-width: 120px; }
         .input-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.85rem; }
         
-        /* 📱 iOS 사파리 자동확대 방지를 위해 16px 고정 */
         .input-group select, .reps-input, .custom-input, input[type="number"], input[type="text"] { 
             width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; 
             font-family: inherit; text-align: center; font-size: 16px; 
@@ -46,26 +53,21 @@
         .custom-input { text-align: left; padding: 8px 4px; }
         .custom-memo { font-size: 0.75rem; color: #10b981; font-weight: bold; margin-top: 4px; text-align: left; line-height: 1.2; }
 
-        /* 📱 모바일 최적화 (화면 너비 600px 이하일 때 발동) */
         @media (max-width: 600px) {
             body { padding: 10px; }
             #app { padding: 15px; }
             h1 { font-size: 1.2rem; }
             .btn { padding: 8px 12px; font-size: 0.9rem; }
             
-            /* 옵션 선택창을 가로에서 세로로 변경 */
             .options-container { flex-direction: column; gap: 15px; }
             .options-container .input-group { width: 100%; }
             
-            /* 카드 폰트 및 여백 조정 */
             .card { padding: 15px; }
             .rm-value { font-size: 1.5rem; }
             
-            /* 표(Table) 크기 조정 */
             table { font-size: 0.85rem; }
             th, td { padding: 8px 2px; }
             
-            /* 추가 운동 테이블 비율 조정 (이름칸을 넓게) */
             #customTableBody td:nth-child(1) { width: 45%; }
             #customTableBody td:nth-child(2) { width: 22%; }
             #customTableBody td:nth-child(3) { width: 20%; }
@@ -151,7 +153,8 @@
     }
 
     function renderHome() {
-        navButtons.innerHTML = `<button class="btn btn-secondary" onclick="renderEditForm()">⚙️ 1RM 설정</button> <button class="btn btn-primary" onclick="renderChart()">📈 추세</button>`;
+        // 기존 공백을 제거하고 버튼 태그만 남겨 gap 속성이 예쁘게 적용되도록 수정
+        navButtons.innerHTML = `<button class="btn btn-secondary" onclick="renderEditForm()">⚙️ 1RM 설정</button><button class="btn btn-primary" onclick="renderChart()">📈 추세</button>`;
         let html = '<div class="card-container">';
         for (const key in workoutData) {
             const ex = workoutData[key];
