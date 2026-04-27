@@ -2,15 +2,15 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title> 백's 3대 500 프로젝트 </title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: 'Pretendard', sans-serif; background-color: #f4f6f8; margin: 0; padding: 20px; display: flex; justify-content: center; }
-        #app { width: 100%; max-width: 600px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        #app { width: 100%; max-width: 600px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); box-sizing: border-box; }
         .header-area { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; }
         h1 { margin: 0; color: #2c3e50; font-size: 1.5rem; }
-        .btn { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; white-space: nowrap; }
         .btn-primary { background-color: #3b82f6; color: white; }
         .btn-success { background-color: #10b981; color: white; margin-top: 20px; width: 100%; font-size: 1.1rem; }
         .btn-secondary { background-color: #e2e8f0; color: #333; }
@@ -27,20 +27,50 @@
         .options-container { background: #eff6ff; padding: 15px; border-radius: 8px; margin: 15px 0; display: flex; gap: 10px; flex-wrap: wrap;}
         .options-container .input-group { margin-bottom: 0; flex: 1; min-width: 120px; }
         .input-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.85rem; }
-        .input-group select, .reps-input, .custom-input { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; font-family: inherit; text-align: center; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.95rem; }
-        th, td { border-bottom: 1px solid #eee; padding: 10px; text-align: center; }
+        /* 📱 iOS 사파리 자동확대 방지를 위해 16px 고정 */
+        .input-group select, .reps-input, .custom-input, input[type="number"], input[type="text"] { 
+            width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; 
+            font-family: inherit; text-align: center; font-size: 16px; 
+        }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.95rem; table-layout: fixed; }
+        th, td { border-bottom: 1px solid #eee; padding: 10px 4px; text-align: center; word-break: keep-all; }
         th { background-color: #f8fafc; color: #475569; }
         .highlight { background-color: #fef08a; font-weight: bold; }
         .joker { color: #ef4444; font-weight: bold; }
         .supp { color: #3b82f6; }
-        .reps-input { width: 60px; font-weight: bold; color: #3b82f6; border-color: #3b82f6; }
+        .reps-input { width: 100%; max-width: 60px; font-weight: bold; color: #3b82f6; border-color: #3b82f6; margin: 0 auto; display: block; }
         
-        /* 추가 운동 영역 스타일 */
         .custom-section { margin-top: 30px; border-top: 2px dashed #cbd5e1; padding-top: 20px; }
-        .custom-input { text-align: left; }
-        .custom-memo { font-size: 0.75rem; color: #10b981; font-weight: bold; margin-top: 4px; text-align: left; }
+        .custom-input { text-align: left; padding: 8px 4px; }
+        .custom-memo { font-size: 0.75rem; color: #10b981; font-weight: bold; margin-top: 4px; text-align: left; line-height: 1.2; }
+
+        /* 📱 모바일 최적화 (화면 너비 600px 이하일 때 발동) */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            #app { padding: 15px; }
+            h1 { font-size: 1.2rem; }
+            .btn { padding: 8px 12px; font-size: 0.9rem; }
+            
+            /* 옵션 선택창을 가로에서 세로로 변경 */
+            .options-container { flex-direction: column; gap: 15px; }
+            .options-container .input-group { width: 100%; }
+            
+            /* 카드 폰트 및 여백 조정 */
+            .card { padding: 15px; }
+            .rm-value { font-size: 1.5rem; }
+            
+            /* 표(Table) 크기 조정 */
+            table { font-size: 0.85rem; }
+            th, td { padding: 8px 2px; }
+            
+            /* 추가 운동 테이블 비율 조정 (이름칸을 넓게) */
+            #customTableBody td:nth-child(1) { width: 45%; }
+            #customTableBody td:nth-child(2) { width: 22%; }
+            #customTableBody td:nth-child(3) { width: 20%; }
+            #customTableBody td:nth-child(4) { width: 13%; }
+        }
     </style>
 </head>
 <body>
@@ -64,7 +94,6 @@
         7: { pct: [0.40, 0.50, 0.60], reps: [5, 5, 5], label: "7주차 (디로딩)" }
     };
 
-    // 종목별 보조 운동 프리셋 목록
     const customExerciseOptions = {
         deadlift: ["풀업", "친업", "바벨 로우", "덤벨 로우", "랫 풀 다운", "시티드 로우", "바벨 컬", "덤벨 컬", "해머 컬"],
         squat: ["레그 프레스", "레그 익스텐션", "레그 컬", "런지", "불가리안 스플릿 스쿼트", "카프 레이즈", "힙 쓰러스트"],
@@ -77,8 +106,8 @@
         deadlift: { name: "데드리프트", week: 1, history: [{ date: "2026-04-20", rm: 140 }], lastCustom: {} }
     };
 
-    let workoutData = JSON.parse(localStorage.getItem('yachuData_v9')) || defaultData;
-    function saveToLocal() { localStorage.setItem('yachuData_v9', JSON.stringify(workoutData)); }
+    let workoutData = JSON.parse(localStorage.getItem('yachuData_v10')) || defaultData;
+    function saveToLocal() { localStorage.setItem('yachuData_v10', JSON.stringify(workoutData)); }
 
     const contentDiv = document.getElementById('content');
     const navButtons = document.getElementById('nav-buttons');
@@ -146,7 +175,6 @@
         const currentRM = data.history[data.history.length - 1].rm;
         const currentWeek = data.week || 1;
 
-        // 드롭다운을 위한 datalist 생성
         let datalistHtml = `<datalist id="custom-list-${key}">`;
         if (customExerciseOptions[key]) {
             customExerciseOptions[key].forEach(ex => { datalistHtml += `<option value="${ex}">`; });
@@ -175,7 +203,7 @@
                 <p style="font-size:0.8rem; color:#666; margin-top:-10px;">빈칸을 터치하면 추천 목록이 나옵니다.</p>
                 <table style="margin-top:0;">
                     <thead>
-                        <tr><th>운동명</th><th>kg</th><th>회</th><th></th></tr>
+                        <tr><th style="text-align:left;">운동명</th><th>kg</th><th>회</th><th></th></tr>
                     </thead>
                     <tbody id="customTableBody">
                     </tbody>
@@ -195,7 +223,7 @@
         const suppOpt = document.getElementById('suppSelect').value;
         const routine = generateYachuRoutine(key, currentRM, week, jokerOpt, suppOpt);
         
-        let tableHtml = `<table><tr><th>세트</th><th>무게</th><th>목표</th><th>실제</th></tr>`;
+        let tableHtml = `<table><tr><th style="width:30%;">세트</th><th style="width:25%;">무게</th><th style="width:20%;">목표</th><th style="width:25%;">실제</th></tr>`;
         routine.forEach(r => {
             tableHtml += `<tr class="${r.class}"><td>${r.type}</td><td>${r.weight}kg</td><td>${r.targetReps}</td><td><input type="number" class="reps-input" data-weight="${r.weight}" value="${parseInt(r.targetReps) || 5}"></td></tr>`;
         });
@@ -207,9 +235,8 @@
         const tbody = document.getElementById('customTableBody');
         const tr = document.createElement('tr');
         
-        // list 속성을 통해 생성해둔 datalist 와 연결합니다.
         tr.innerHTML = `
-            <td style="width: 50%;">
+            <td>
                 <input type="text" list="custom-list-${key}" class="custom-input custom-name" placeholder="선택/입력" oninput="showCustomMemo(this, '${key}')" onclick="this.value=''; this.dispatchEvent(new Event('input'))">
                 <div class="custom-memo"></div>
             </td>
@@ -320,6 +347,7 @@
         html += `<button class="btn btn-primary" style="width:100%; margin-top:10px;" onclick="updateRM()">저장</button></div>`;
         contentDiv.innerHTML = html;
     }
+    
     function updateRM() {
         const today = new Date().toISOString().split('T')[0];
         for (const key in workoutData) {
@@ -333,6 +361,7 @@
         }
         saveToLocal(); renderHome();
     }
+    
     function renderChart() {
         navButtons.innerHTML = `<button class="btn btn-secondary" onclick="renderHome()">🔙 홈으로</button>`;
         contentDiv.innerHTML = `<canvas id="progressChart" style="margin-top:20px;"></canvas>`;
