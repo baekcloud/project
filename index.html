@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title> 백's 3대 500 프로젝트 </title>
+    <title>백's 3대 500프로젝트</title>
+    
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="icon" href="icon.png">
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: 'Pretendard', sans-serif; background-color: #f4f6f8; margin: 0; padding: 20px; display: flex; justify-content: center; }
         #app { width: 100%; max-width: 600px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); box-sizing: border-box; }
         
-        /* 헤더 및 버튼 영역 디자인 개선 */
         .header-area { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; }
-        h1 { margin: 0; color: #2c3e50; font-size: 1.5rem; }
+        h1 { margin: 0; color: #2c3e50; font-size: 1.5rem; word-break: keep-all; }
         
-        /* 버튼 컨테이너를 우측 끝으로 밀어붙이고 간격을 일정하게 만듭니다 */
         #nav-buttons { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
         
         .btn { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; white-space: nowrap; }
@@ -53,10 +53,16 @@
         .custom-input { text-align: left; padding: 8px 4px; }
         .custom-memo { font-size: 0.75rem; color: #10b981; font-weight: bold; margin-top: 4px; text-align: left; line-height: 1.2; }
 
+        /* 📱 모바일 최적화 (화면 너비 600px 이하) */
         @media (max-width: 600px) {
             body { padding: 10px; }
             #app { padding: 15px; }
-            h1 { font-size: 1.2rem; }
+            
+            /* ✨ 핵심 변경: 모바일에서는 제목을 위로, 버튼을 아래로 2줄 배치 */
+            .header-area { flex-direction: column; align-items: flex-start; gap: 12px; }
+            #nav-buttons { width: 100%; justify-content: flex-end; }
+            
+            h1 { font-size: 1.3rem; line-height: 1.2; }
             .btn { padding: 8px 12px; font-size: 0.9rem; }
             
             .options-container { flex-direction: column; gap: 15px; }
@@ -79,7 +85,7 @@
 
 <div id="app">
     <div class="header-area">
-        <h1>🏋️  백's 3대 500 프로젝트 </h1>
+        <h1>🏋️ 백's 3대 500프로젝트</h1>
         <div id="nav-buttons"></div>
     </div>
     <div id="content"></div>
@@ -108,8 +114,9 @@
         deadlift: { name: "데드리프트", week: 1, history: [{ date: "2026-04-20", rm: 140 }], lastCustom: {} }
     };
 
-    let workoutData = JSON.parse(localStorage.getItem('yachuData_v10')) || defaultData;
-    function saveToLocal() { localStorage.setItem('yachuData_v10', JSON.stringify(workoutData)); }
+    // v12로 로컬스토리지 키 업데이트 (충돌 방지)
+    let workoutData = JSON.parse(localStorage.getItem('yachuData_v12')) || defaultData;
+    function saveToLocal() { localStorage.setItem('yachuData_v12', JSON.stringify(workoutData)); }
 
     const contentDiv = document.getElementById('content');
     const navButtons = document.getElementById('nav-buttons');
@@ -153,7 +160,6 @@
     }
 
     function renderHome() {
-        // 기존 공백을 제거하고 버튼 태그만 남겨 gap 속성이 예쁘게 적용되도록 수정
         navButtons.innerHTML = `<button class="btn btn-secondary" onclick="renderEditForm()">⚙️ 1RM 설정</button><button class="btn btn-primary" onclick="renderChart()">📈 추세</button>`;
         let html = '<div class="card-container">';
         for (const key in workoutData) {
